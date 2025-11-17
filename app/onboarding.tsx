@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList, Animated } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Animated, TouchableOpacity } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
 
@@ -49,16 +49,28 @@ const Onboarding = () => {
   const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
   const handleNextPress = async () => {
-  if (currentIndex < slides.length - 1) {
-    slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
-  } else {
-    await completeOnboarding(); // Lưu trạng thái
-    router.replace('/'); // Chuyển về trang chính
-  }
-};
+    if (currentIndex < slides.length - 1) {
+      slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
+    } else {
+      await completeOnboarding(); // Lưu trạng thái
+      router.replace('/'); // Chuyển về trang chính
+    }
+  };
+
+  const handleSkipPress = async () => {
+    await completeOnboarding(); 
+    router.replace('/');        
+  };
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={handleSkipPress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>DineLex</Text>
       <View style={{ flex: 0.9 }}>
         <FlatList
@@ -104,5 +116,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 12,
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 60,        
+    right: 20,      
+    zIndex: 10,     
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)', 
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
   },
 });

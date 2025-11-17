@@ -5,7 +5,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect, useState } from 'react';
-import { hasCompletedOnboarding } from '@/utils/onboarding';
+import { hasCompletedOnboarding, resetOnboarding } from '@/utils/onboarding';
 import { View, ActivityIndicator } from 'react-native';
 
 export const unstable_settings = {
@@ -18,6 +18,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const checkOnboarding = async () => {
+      await resetOnboarding(); // Chỉ để mục đích test, xóa dòng này trong production
       const completed = await hasCompletedOnboarding();
       setInitialRoute(completed ? '(tabs)' : 'onboarding');
     };
