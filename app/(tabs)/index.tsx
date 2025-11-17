@@ -1,98 +1,80 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { DailyChallengeCard } from '@/components/home/DailyChallengeCard';
+import { FeaturedTaskCard } from '@/components/home/FeaturedTaskCard';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { QuickActionRow } from '@/components/home/QuickActionRow';
+import { TabSelector } from '@/components/home/TabSelector';
+import { TaskList } from '@/components/home/TaskList';
+import { challenge, featuredTask, homeTabs, quickActions, tasksByTab } from '@/components/home/data';
+import type { HomeTabId } from '@/components/home/types';
+import { resetOnboarding } from '@/utils/onboarding';
 
-export default function HomeScreen() {
+
+export default function HomeTab() {
+  const [activeTab, setActiveTab] = useState<HomeTabId>('inProgress');
+  const router = useRouter();
+
+  const handleResetOnboarding = async () => {
+    await resetOnboarding();
+    Alert.alert('Reset thành công', 'Onboarding sẽ xuất hiện lại ngay.', [
+      {
+        text: 'OK',
+        onPress: () => router.replace('/onboarding'),
+      },
+    ]);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <HomeHeader userName="Đăng Khoa" />
+        <TabSelector tabs={homeTabs} activeTab={activeTab} onChange={setActiveTab} />
+        <FeaturedTaskCard task={featuredTask} />
+        <QuickActionRow
+          actions={quickActions}
+          onActionPress={() => Alert.alert('Action', 'Feature coming soon in the next sprint.')}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <DailyChallengeCard
+          {...challenge}
+          onAction={() => Alert.alert('Nice!', 'Daily challenge completed.')}
+          onDismiss={() => Alert.alert('Hidden', 'Challenge dismissed for now.')}
+        />
+        <TaskList
+          title={homeTabs.find(tab => tab.id === activeTab)?.label ?? 'Tasks'}
+          tasks={tasksByTab[activeTab]}
+          onViewAll={() => Alert.alert('See more', 'Navigate to the dedicated list.')}
+        />
+        <TouchableOpacity style={styles.testButton} onPress={handleResetOnboarding}>
+          <Text style={styles.testButtonText}>Test lại Onboarding</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f5f6fb',
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingBottom: 110,
+    gap: 18,
+  },
+  testButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 16,
+    backgroundColor: '#6C63FF',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  testButtonText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 });
