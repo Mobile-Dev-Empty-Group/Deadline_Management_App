@@ -2,9 +2,9 @@ import { StyleSheet, Text, View, FlatList, Animated, TouchableOpacity } from 're
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
 
-import Paginator from '@/components/paginator';
-import OnboardingItem from '@/components/onboarding-item';
-import NextButton from '@/components/next-button';
+import Paginator from '@/components/onboarding/paginator';
+import OnboardingItem from '@/components/onboarding/onboarding-item';
+import NextButton from '@/components/onboarding/next-button';
 import { completeOnboarding } from '@/utils/onboarding';
 import { Slide } from '@/types/slide';
 

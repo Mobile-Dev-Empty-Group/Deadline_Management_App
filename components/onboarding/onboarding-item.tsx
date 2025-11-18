@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image, useWindowDimensions } from 'react-native'
 import React from 'react'
 
-import { Slide } from '../types/slide'
+import { Slide } from '@/types/slide'
 
 const OnboardingItem = ({ slide }: { slide: Slide }) => {
   const { width } = useWindowDimensions();

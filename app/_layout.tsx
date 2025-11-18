@@ -18,7 +18,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     const checkOnboarding = async () => {
-      await resetOnboarding(); // Chỉ để mục đích test, xóa dòng này trong production
       const completed = await hasCompletedOnboarding();
       setInitialRoute(completed ? '(tabs)' : 'onboarding');
     };
