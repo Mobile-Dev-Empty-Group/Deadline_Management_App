@@ -15,7 +15,10 @@ export function TaskList({ title, tasks, onViewAll }: Props) {
     <View style={styles.wrapper}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.link} onPress={onViewAll}>
+        <Text style={styles.link} onPress={() => {
+    // Lệnh này sẽ ném ra lỗi ngay lập tức khi nhấn
+    throw new Error("Test Sentry: Lỗi này được ném từ nút View All!");
+  }}>
           View All
         </Text>
       </View>

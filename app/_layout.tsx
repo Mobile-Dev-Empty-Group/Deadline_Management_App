@@ -12,7 +12,14 @@ import * as Sentry from '@sentry/react-native';
 Sentry.init({
   dsn: "https://6dbaf618bbf4cd125d13d9183ea04457@o4510502727909376.ingest.de.sentry.io/4510502825033808",
   debug: true, // Bật debug để thấy log Sentry trong console khi chạy dev
-  tracesSampleRate: 1.0
+  tracesSampleRate: 1.0,
+  // Tự động đo lường hiệu năng của React Navigation (chuyển trang)
+  integrations: [
+    Sentry.reactNativeTracingIntegration({
+      // Tùy chọn: Ghi lại thời gian tải của các request mạng (XHR/Fetch)
+      tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
+    }),
+  ],
 });
 
 
