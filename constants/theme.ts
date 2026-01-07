@@ -21,6 +21,11 @@ export const Colors = {
     inputBackground: '#FFFFFF',
     tabInactive: '#D1D5DB',
     primary: '#6188D9',
+    tabBarBackground: '#F1F5F9',
+    tabBarActive: '#7B93FF',
+    tabBarInactive: '#334155',
+    fabBackground: '#84A4FF',
+    fabBorder: '#FFFFFF',
   },
   dark: {
     text: '#ECEDEE',
@@ -34,6 +39,11 @@ export const Colors = {
     inputBackground: '#1D2021',
     tabInactive: '#4B5563',
     primary: '#85A5FF',
+    tabBarBackground: '#1E293B',
+    tabBarActive: '#A5B4FC',
+    tabBarInactive: '#94A3B8',
+    fabBackground: '#6366F1',
+    fabBorder: '#151718',
   },
 };
 

@@ -1,99 +1,145 @@
-import React from 'react';
+import { ThemedView } from '@/components/themed-view';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
-
-const iconMap: Record<string, React.ComponentProps<typeof Feather>['name']> = {
-  index: 'home',
-  calendar: 'calendar',
-  tasks: 'check-square',
-  profile: 'user',
-};
+import React, { useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import NewTaskModal from './NewTaskModal';
 
 export function HomeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const bgColor = useThemeColor({}, 'tabBarBackground');
+  const activeColor = useThemeColor({}, 'tabBarActive');
+  const inactiveColor = useThemeColor({}, 'tabBarInactive');
+  const fabColor = useThemeColor({}, 'fabBackground');
+  const fabBorderColor = useThemeColor({}, 'fabBorder');
+  const [modalVisible, setModalVisible] = useState(false);
+
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.bar}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const isFocused = state.index === index;
-          const icon = iconMap[route.name] ?? 'circle';
+    <ThemedView safe style={styles.outerWrapper}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <Pressable 
+          style={StyleSheet.absoluteFillObject}
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={{ backgroundColor: 'rgba(0,0,0,0.4)', flex: 1 }} />
+        </Pressable>
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
+        <View style={styles.modalContent}>
+          <NewTaskModal onClose={() => setModalVisible(false)} />
+        </View>
+      </Modal>
+      
+      <View style={styles.container}>
+        <View style={[styles.bar, { backgroundColor: bgColor }]}>
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const isFocused = state.index === index;
+            const icon = iconMap[route.name] ?? 'circle-outline';
 
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name, route.params);
+              }
+            };
 
-          return (
-            <Pressable
-              key={route.name}
-              accessibilityRole="button"
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
-              style={[styles.tabButton, isFocused && styles.tabButtonActive]}
-              onPress={onPress}>
-              <Feather name={icon} size={22} color={isFocused ? '#6C63FF' : '#8E90A2'} />
-            </Pressable>
-          );
-        })}
+            return (
+              <React.Fragment key={route.name}>
+                {index === 2 && <View style={{ width: 60 }} />} 
+                <Pressable style={styles.tabButton} onPress={onPress}>
+                  <MaterialCommunityIcons 
+                    name={iconMap[route.name] ?? 'circle-outline'}
+                    size={28} 
+                    color={isFocused ? activeColor : inactiveColor} 
+                  />
+                </Pressable>
+              </React.Fragment>
+            );
+          })}
+        </View>
+
+        {/* Nút FAB với viền (border) tự đổi màu theo theme để tách biệt với bar */}
+        <Pressable 
+          style={[styles.fab, { backgroundColor: fabBorderColor }]} 
+          onPress={() => setModalVisible(true)}>
+          <View style={[styles.fabInner, { backgroundColor: fabColor }]}>
+            <MaterialCommunityIcons name="plus" size={32} color="#fff" />
+          </View>
+        </Pressable>
       </View>
-      <Pressable style={styles.fab} onPress={() => Alert.alert('Create', 'Add a new task.')}>
-        <Feather name="plus" size={28} color="#fff" />
-      </Pressable>
-    </View>
+    </ThemedView>
   );
 }
 
+const iconMap: Record<string, React.ComponentProps<typeof MaterialCommunityIcons>['name']> = {
+  index: 'home-variant-outline',
+  tasks: 'clipboard-list-outline',
+  analytic: 'chart-arc',
+  profile: 'account-circle-outline',
+};
+
 const styles = StyleSheet.create({
-  wrapper: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)', // Làm tối nền khi mở modal
+  },
+  modalContent: {
+    marginTop: 'auto', // Đẩy modal xuống đáy màn hình
+    backgroundColor: 'transparent',
+  },
+  outerWrapper: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 12,
+    backgroundColor: 'transparent', // Để ThemedView safe không che nội dung phía sau
+  },
+  container: {
     alignItems: 'center',
-    paddingBottom: 12,
+    paddingTop: 25, // Tạo khoảng trống cho nút FAB nhô lên
+    paddingBottom: 10, // Khoảng cách từ Bar đến vạch an toàn
   },
   bar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 36,
-    paddingHorizontal: 32,
-    paddingVertical: 18,
-    gap: 24,
-    shadowColor: '#1A1A2E',
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
+    borderRadius: 50,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    width: '92%',
     justifyContent: 'space-between',
-    width: '88%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 5,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
   },
-  tabButtonActive: {},
   fab: {
     position: 'absolute',
-    top: -36,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#6C63FF',
+    top: 0, // Nằm trên cùng của container để nhô cao hơn Bar
+    padding: 6,
+    borderRadius: 35,
+  },
+  fabInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#6C63FF',
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
 });
-
