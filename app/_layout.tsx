@@ -3,11 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useEffect, useState } from 'react';
-import { hasCompletedOnboarding, resetOnboarding } from '@/utils/onboarding';
-import { View, ActivityIndicator } from 'react-native';
-import { Stack } from "expo-router";
+import { hasCompletedOnboarding } from '@/utils/onboarding';
 import * as Sentry from '@sentry/react-native';
+import { Stack } from "expo-router";
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 Sentry.init({
   dsn: "https://6dbaf618bbf4cd125d13d9183ea04457@o4510502727909376.ingest.de.sentry.io/4510502825033808",
@@ -15,10 +15,7 @@ Sentry.init({
   tracesSampleRate: 1.0,
   // Tự động đo lường hiệu năng của React Navigation (chuyển trang)
   integrations: [
-    Sentry.reactNativeTracingIntegration({
-      // Tùy chọn: Ghi lại thời gian tải của các request mạng (XHR/Fetch)
-      tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
-    }),
+    Sentry.reactNativeTracingIntegration(),
   ],
 });
 
@@ -50,7 +47,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <StatusBar style="auto" />
       <Stack initialRouteName={initialRoute}>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

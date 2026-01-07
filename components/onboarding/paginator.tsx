@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Animated, useWindowDimensions, StyleSheet } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { Slide } from '@/types/slide';
+import React from 'react';
+import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 const Paginator = ({
   data,
@@ -10,6 +11,8 @@ const Paginator = ({
   scrollX: Animated.Value;
 }) => {
   const { width } = useWindowDimensions();
+  const activeDotColor = useThemeColor({}, 'tint');
+  const inactiveDotColor = useThemeColor({}, 'icon');
 
   return (
     <View style={styles.container}>
@@ -28,10 +31,23 @@ const Paginator = ({
           extrapolate: 'clamp',
         });
 
+        const backgroundColor = scrollX.interpolate({
+          inputRange,
+          outputRange: [inactiveDotColor, activeDotColor, inactiveDotColor],
+          extrapolate: 'clamp',
+        });
+
         return (
           <Animated.View
             key={i}
-            style={[styles.dot, { width: dotWidth, opacity }]}
+            style={[
+              styles.dot, 
+              { 
+                width: dotWidth, 
+                opacity,
+                backgroundColor: backgroundColor // Sử dụng màu đã interpolate
+              }
+            ]}
           />
         );
       })}
@@ -53,7 +69,6 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#333',
     marginHorizontal: 4,
   },
 })

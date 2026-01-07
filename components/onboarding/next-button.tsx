@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, G } from 'react-native-svg';
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const NextButton = ({
@@ -12,6 +12,13 @@ const NextButton = ({
   percentage: number;
   onPress?: () => void;
 }) => {
+
+  // 'tint' thường dùng cho các nút nhấn nổi bật, 'text' dùng cho icon để tương phản
+  const activeStrokeColor = useThemeColor({}, 'tint'); 
+  const buttonBgColor = useThemeColor({}, 'tint'); 
+  const iconColor = useThemeColor({}, 'background'); // Màu icon ngược với màu nền
+  const backgroundStrokeColor = useThemeColor({}, 'tabIconDefault'); // Màu vòng nền mờ
+
   const size = 128;
   const strokeWidth = 6;
   const center = size / 2;
@@ -40,7 +47,8 @@ const NextButton = ({
         <G rotate="-90" origin={`${center}, ${center}`}>
           {/* Vòng nền */}
           <Circle
-            stroke="#E0E0E0"
+            stroke={backgroundStrokeColor}
+            strokeOpacity={0.2}
             fill="none"
             cx={center}
             cy={center}
@@ -50,7 +58,7 @@ const NextButton = ({
 
           {/* Vòng progress animated */}
           <AnimatedCircle
-            stroke="#333"
+            stroke={activeStrokeColor}
             fill="none"
             cx={center}
             cy={center}
@@ -64,8 +72,8 @@ const NextButton = ({
       </Svg>
 
       {/* Nút chính giữa */}
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Ionicons name="arrow-forward" size={32} color="#fff" />
+      <TouchableOpacity style={[styles.button, { backgroundColor: buttonBgColor }]} onPress={onPress}>
+        <Ionicons name="arrow-forward" size={32} color={iconColor} />
       </TouchableOpacity>
     </View>
   );
@@ -83,9 +91,12 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5, 
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

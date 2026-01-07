@@ -1,12 +1,19 @@
-import { StyleSheet, Text, View, FlatList, Animated, TouchableOpacity } from 'react-native';
-import React, { useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { Animated, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-import Paginator from '@/components/onboarding/paginator';
-import OnboardingItem from '@/components/onboarding/onboarding-item';
+// Component theo Theme
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { useThemeColor } from '@/hooks/use-theme-color';
+
+// Onboarding Components
 import NextButton from '@/components/onboarding/next-button';
-import { completeOnboarding } from '@/utils/onboarding';
+import OnboardingItem from '@/components/onboarding/onboarding-item';
+import Paginator from '@/components/onboarding/paginator';
+
 import { Slide } from '@/types/slide';
+import { completeOnboarding } from '@/utils/onboarding';
 
 const slides: Slide[] = [
   {
@@ -33,6 +40,9 @@ const Onboarding = () => {
   // Theo dõi vị trí scroll ngang (dùng cho hiệu ứng Paginator và NextButton)
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef<FlatList<Slide>>(null);
+
+  // Màu sắc động cho nút Skip
+  const skipBgColor = useThemeColor({ light: 'rgba(0,0,0,0.05)', dark: 'rgba(255,255,255,0.1)' }, 'background');
 
   /**
    * Callback khi FlatList thay đổi các item đang hiển thị
@@ -63,15 +73,16 @@ const Onboarding = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <TouchableOpacity
-        style={styles.skipButton}
+        style={[styles.skipButton, { backgroundColor: skipBgColor }]}
         onPress={handleSkipPress}
         activeOpacity={0.7}
       >
-        <Text style={styles.skipText}>Skip</Text>
+        <ThemedText style={styles.skipText}>Skip</ThemedText>
       </TouchableOpacity>
-      <Text style={styles.title}>DineLex</Text>
+      {/* Tiêu đề App */}
+      <ThemedText style={styles.title}>DineLex</ThemedText>
       <View style={{ flex: 0.9 }}>
         <FlatList
           data={slides}
@@ -98,7 +109,7 @@ const Onboarding = () => {
         percentage={((currentIndex + 1) / slides.length) * 100}
         onPress={handleNextPress}
       />
-    </View>
+    </ThemedView>
   );
 };
 
@@ -107,7 +118,6 @@ export default Onboarding;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
     paddingTop: 50,
     paddingBottom: 20,
   },

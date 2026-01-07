@@ -1,17 +1,21 @@
-import { StyleSheet, Text, View, Image, useWindowDimensions } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { Slide } from '@/types/slide'
+// Import các thành phần theo Theme
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+
+import { Slide } from '@/types/slide';
 
 const OnboardingItem = ({ slide }: { slide: Slide }) => {
   const { width } = useWindowDimensions();
   return (
-    <View style={[styles.container, { width }]}>
+    <ThemedView style={[styles.container, { width }]}>
       <Image source={slide.image} style={[styles.image, { width, resizeMode: 'contain' }]} />
       <View style={{ flex: 0.4, justifyContent: 'center' }}>
-        <Text style={styles.description}>{slide.description}</Text>
+        <ThemedText style={styles.description}>{slide.description}</ThemedText>
       </View>
-    </View>
+    </ThemedView>
   )
 }
 
@@ -28,9 +32,8 @@ const styles = StyleSheet.create({
   },
   description: {
     fontWeight: '800',
-    fontSize: 30,
+    fontSize: 28,
     textAlign: 'center',
-    color: '#1a1a1a',
     lineHeight: 34,
     paddingHorizontal: 8,
   },

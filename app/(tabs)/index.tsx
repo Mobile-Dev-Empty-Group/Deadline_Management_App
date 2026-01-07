@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DailyChallengeCard } from '@/components/home/DailyChallengeCard';
 import { FeaturedTaskCard } from '@/components/home/FeaturedTaskCard';
@@ -50,6 +50,10 @@ export default function HomeTab() {
         />
         <TouchableOpacity style={styles.testButton} onPress={handleResetOnboarding}>
           <Text style={styles.testButtonText}>Test lại Onboarding</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.testButton} onPress={() => router.push('/(auth)/login')}>
+          <Text style={styles.testButtonText}>Trang Login</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
