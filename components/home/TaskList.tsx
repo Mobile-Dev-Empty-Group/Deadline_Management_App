@@ -1,6 +1,6 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { Task } from './types';
 
@@ -8,44 +8,72 @@ type Props = {
   title: string;
   tasks: Task[];
   onViewAll?: () => void;
+  onTaskPress?: (taskId: string) => void;
+  onStatusChange?: (taskId: string, currentStatus: string) => void;
 };
 
-export function TaskList({ title, tasks, onViewAll }: Props) {
+export function TaskList({ title, tasks, onViewAll, onTaskPress, onStatusChange }: Props) {
+  const handleCheckboxPress = (task: Task, e: any) => {
+    e.stopPropagation();
+    if (onStatusChange) {
+      // Map completed status sang API status
+      const currentStatus = task.completed ? 'COMPLETED' : 'TO_DO';
+      onStatusChange(task.id, currentStatus);
+    }
+  };
+
+  const handleTaskItemPress = (task: Task) => {
+    if (onTaskPress) {
+      onTaskPress(task.id);
+    }
+  };
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.link} onPress={() => {
-    // Lệnh này sẽ ném ra lỗi ngay lập tức khi nhấn
-    throw new Error("Test Sentry: Lỗi này được ném từ nút View All!");
-  }}>
+        <Text style={styles.link} onPress={onViewAll}>
           View All
         </Text>
       </View>
       <View style={styles.list}>
-        {tasks.map(task => (
-          <View key={task.id} style={styles.item}>
-            <View
-              style={[
-                styles.checkbox,
-                task.completed ? styles.checkboxCompleted : styles.checkboxPending,
-              ]}>
-              {task.completed ? <Feather name="check" size={12} color="#fff" /> : null}
-            </View>
-            <View style={styles.itemContent}>
-              <View style={styles.itemTitleRow}>
-                <Text style={styles.itemTitle}>{task.title}</Text>
-                {task.tag ? (
-                  <View style={[styles.tag, { backgroundColor: task.tagColor ?? '#EAEAEA' }]}>
-                    <Text style={styles.tagLabel}>{task.tag}</Text>
-                  </View>
-                ) : null}
+        {tasks.length > 0 ? (
+          tasks.map(task => (
+            <TouchableOpacity
+              key={task.id}
+              style={styles.item}
+              onPress={() => handleTaskItemPress(task)}
+              activeOpacity={0.7}
+            >
+              <TouchableOpacity
+                onPress={(e) => handleCheckboxPress(task, e)}
+                style={[
+                  styles.checkbox,
+                  task.completed ? styles.checkboxCompleted : styles.checkboxPending,
+                ]}
+              >
+                {task.completed ? <Feather name="check" size={12} color="#fff" /> : null}
+              </TouchableOpacity>
+              <View style={styles.itemContent}>
+                <View style={styles.itemTitleRow}>
+                  <Text style={[styles.itemTitle, task.completed && styles.itemTitleCompleted]}>
+                    {task.title}
+                  </Text>
+                  {task.tag ? (
+                    <View style={[styles.tag, { backgroundColor: task.tagColor ?? '#EAEAEA' }]}>
+                      <Text style={styles.tagLabel}>{task.tag}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                {task.time && <Text style={styles.itemTime}>{task.time}</Text>}
               </View>
-              <Text style={styles.itemTime}>{task.time}</Text>
-            </View>
-            <Feather name="more-horizontal" size={18} color="#A8A6AD" />
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No tasks found</Text>
           </View>
-        ))}
+        )}
       </View>
     </View>
   );
@@ -125,6 +153,18 @@ const styles = StyleSheet.create({
   },
   itemTime: {
     fontSize: 13,
+    color: '#8E8E93',
+  },
+  itemTitleCompleted: {
+    textDecorationLine: 'line-through',
+    opacity: 0.6,
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
     color: '#8E8E93',
   },
 });

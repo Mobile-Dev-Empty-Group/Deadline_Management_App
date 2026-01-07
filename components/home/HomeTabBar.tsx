@@ -22,7 +22,7 @@ export function HomeTabBar({ state, descriptors, navigation }: BottomTabBarProps
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable 
+        <Pressable
           style={StyleSheet.absoluteFillObject}
           onPress={() => setModalVisible(false)}
         >
@@ -30,10 +30,16 @@ export function HomeTabBar({ state, descriptors, navigation }: BottomTabBarProps
         </Pressable>
 
         <View style={styles.modalContent}>
-          <NewTaskModal onClose={() => setModalVisible(false)} />
+          <NewTaskModal
+            onClose={() => setModalVisible(false)}
+            onTaskCreated={() => {
+              setModalVisible(false);
+              // Có thể emit event để reload tasks nếu cần
+            }}
+          />
         </View>
       </Modal>
-      
+
       <View style={styles.container}>
         <View style={[styles.bar, { backgroundColor: bgColor }]}>
           {state.routes.map((route, index) => {
@@ -54,12 +60,12 @@ export function HomeTabBar({ state, descriptors, navigation }: BottomTabBarProps
 
             return (
               <React.Fragment key={route.name}>
-                {index === 2 && <View style={{ width: 60 }} />} 
+                {index === 2 && <View style={{ width: 60 }} />}
                 <Pressable style={styles.tabButton} onPress={onPress}>
-                  <MaterialCommunityIcons 
+                  <MaterialCommunityIcons
                     name={iconMap[route.name] ?? 'circle-outline'}
-                    size={28} 
-                    color={isFocused ? activeColor : inactiveColor} 
+                    size={28}
+                    color={isFocused ? activeColor : inactiveColor}
                   />
                 </Pressable>
               </React.Fragment>
@@ -68,8 +74,8 @@ export function HomeTabBar({ state, descriptors, navigation }: BottomTabBarProps
         </View>
 
         {/* Nút FAB với viền (border) tự đổi màu theo theme để tách biệt với bar */}
-        <Pressable 
-          style={[styles.fab, { backgroundColor: fabBorderColor }]} 
+        <Pressable
+          style={[styles.fab, { backgroundColor: fabBorderColor }]}
           onPress={() => setModalVisible(true)}>
           <View style={[styles.fabInner, { backgroundColor: fabColor }]}>
             <MaterialCommunityIcons name="plus" size={32} color="#fff" />

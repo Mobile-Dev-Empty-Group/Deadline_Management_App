@@ -1,23 +1,180 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { getMe, updateProfile, uploadMedia, type User } from '@/services/api';
+import { clearAllUserData } from '@/utils/auth';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 export default function ProfileScreen({ navigation }: any) {
+  const router = useRouter();
   // Theme colors
   const textColor = useThemeColor({}, 'text');
   const secTextColor = useThemeColor({}, 'textSecondary');
   const cardBg = useThemeColor({}, 'inputBackground');
   const borderColor = useThemeColor({}, 'border');
   const primaryColor = useThemeColor({}, 'primary');
+
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setIsLoading(true);
+      const userData = await getMe();
+      setUser(userData);
+    } catch (error) {
+      // Xử lý lỗi nếu cần
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditName = () => {
+    if (user) {
+      setEditedName(user.name);
+      setIsEditingName(true);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user || !editedName.trim()) {
+      setIsEditingName(false);
+      return;
+    }
+
+    if (editedName.trim() === user.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    try {
+      setIsSavingName(true);
+      const updatedUser = await updateProfile({ name: editedName.trim() });
+      setUser(updatedUser);
+      setIsEditingName(false);
+      Alert.alert('Success', 'Name updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update name');
+      setEditedName(user.name); // Revert on error
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    if (user) {
+      setEditedName(user.name);
+    }
+  };
+
+  const handleMenuPress = async (item: typeof MENU_ITEMS[0]) => {
+    if (item.id === '4') {
+      // Log out
+      Alert.alert(
+        'Log Out',
+        'Are you sure you want to log out?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Log Out',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await clearAllUserData();
+                router.replace('/(auth)/login');
+              } catch (error) {
+                Alert.alert('Error', 'Failed to log out');
+              }
+            },
+          },
+        ]
+      );
+    } else if (item.id === '1') {
+      // My Task
+      router.push('/(tabs)/tasks');
+    } else if (item.id === '2') {
+      // Report/Analytics
+      router.push('/(tabs)/analytic');
+    } else if (item.id === '3') {
+      // About us
+      Alert.alert('About Us', 'This is a deadline management app.');
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to upload avatar!');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const imageUri = result.assets[0].uri;
+      setIsUploading(true);
+
+      // Upload image
+      const uploadResult = await uploadMedia(imageUri);
+      console.log('Upload result from API:', uploadResult);
+      
+      // uploadResult.url đã được xử lý trong uploadMedia function
+      const avatarUrl = uploadResult.url;
+      console.log('Avatar URL to save to profile:', avatarUrl);
+      
+      // Update profile with new avatar URL - lưu cả relative path và full URL
+      // Backend có thể cần relative path hoặc full URL tùy cách implement
+      const updatedUser = await updateProfile({ avatar: avatarUrl });
+      console.log('Updated user from API:', updatedUser);
+      console.log('User avatar after update:', updatedUser.avatar);
+      setUser(updatedUser);
+      
+      // Reload profile để đảm bảo có data mới nhất
+      await loadProfile();
+
+      Alert.alert('Success', 'Avatar updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to upload avatar');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Danh sách các tùy chọn Menu
   const MENU_ITEMS = [
@@ -31,43 +188,133 @@ export default function ProfileScreen({ navigation }: any) {
     <ThemedView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={[styles.iconButton, { borderColor }]} 
-          onPress={() => navigation?.goBack()}
+        <TouchableOpacity
+          style={[styles.iconButton, { borderColor }]}
+          onPress={() => router.back()}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={textColor} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: textColor }]}>My Profile</Text>
-        <TouchableOpacity style={[styles.iconButton, { borderColor }]}>
+        <TouchableOpacity 
+          style={[styles.iconButton, { borderColor }]}
+          onPress={() => router.push('/setting')}
+        >
           <MaterialCommunityIcons name="cog-outline" size={24} color={textColor} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Avatar Section */}
         <View style={styles.profileSection}>
-          <View style={styles.avatarWrapper}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/300' }}
-              style={styles.avatar} 
-            />
-            <TouchableOpacity style={[styles.editBadge, { backgroundColor: primaryColor }]}>
-              <MaterialCommunityIcons name="pencil" size={14} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.userName, { color: textColor }]}>Thanh Tâm</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={primaryColor} />
+          ) : (
+            <>
+              <View style={styles.avatarWrapper}>
+                <Image
+                  source={{
+                    uri: user?.avatar 
+                      ? (user.avatar.startsWith('http') 
+                          ? user.avatar 
+                          : user.avatar.startsWith('/')
+                            ? `https://backend-jqpw.onrender.com${user.avatar}`
+                            : user.avatar.startsWith('uploads/')
+                              ? `https://backend-jqpw.onrender.com/media/${user.avatar}`
+                              : `https://backend-jqpw.onrender.com/media/${user.avatar}`)
+                      : 'https://i.pravatar.cc/300'
+                  }}
+                  style={styles.avatar}
+                  resizeMode="cover"
+                  onError={(error: any) => {
+                    const errorMsg = error?.nativeEvent?.error || error?.message || 'Unknown error';
+                    console.log('Image load error:', errorMsg);
+                    console.log('Avatar URL from user:', user?.avatar);
+                    console.log('Full URL attempted:', user?.avatar 
+                      ? (user.avatar.startsWith('http') 
+                          ? user.avatar 
+                          : user.avatar.startsWith('/')
+                            ? `https://backend-jqpw.onrender.com${user.avatar}`
+                            : `https://backend-jqpw.onrender.com/media/${user.avatar}`)
+                      : 'https://i.pravatar.cc/300');
+                  }}
+                  onLoad={() => {
+                    console.log('Image loaded successfully');
+                  }}
+                />
+                <TouchableOpacity 
+                  style={[styles.editBadge, { backgroundColor: primaryColor }]}
+                  onPress={handleUploadAvatar}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <MaterialCommunityIcons name="pencil" size={14} color="#FFF" />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {isEditingName ? (
+                <View style={styles.nameEditContainer}>
+                  <TextInput
+                    style={[styles.nameInput, { color: textColor, borderColor, backgroundColor: cardBg }]}
+                    value={editedName}
+                    onChangeText={setEditedName}
+                    autoFocus
+                    placeholder="Enter name"
+                    placeholderTextColor={secTextColor}
+                  />
+                  <View style={styles.nameEditButtons}>
+                    <TouchableOpacity
+                      style={[styles.nameEditButton, { backgroundColor: cardBg, borderColor }]}
+                      onPress={handleCancelEditName}
+                      disabled={isSavingName}
+                    >
+                      <MaterialCommunityIcons name="close" size={18} color={textColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.nameEditButton, { backgroundColor: primaryColor }]}
+                      onPress={handleSaveName}
+                      disabled={isSavingName || !editedName.trim()}
+                    >
+                      {isSavingName ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <MaterialCommunityIcons name="check" size={18} color="#FFF" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.nameWrapper}>
+                  <View style={styles.nameWithIcon}>
+                    <Text style={[styles.userName, { color: textColor }]}>
+                      {user?.name || 'Loading...'}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleEditName}
+                      activeOpacity={0.7}
+                      style={styles.editNameButton}
+                    >
+                      <MaterialCommunityIcons name="pencil" size={16} color={secTextColor} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
         </View>
 
         {/* Menu Items */}
         <View style={styles.menuContainer}>
           {MENU_ITEMS.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
+            <TouchableOpacity
+              key={item.id}
               style={[styles.menuItem, { backgroundColor: 'transparent' }]}
-              onPress={() => item.route && navigation?.navigate(item.route)}
+              onPress={() => handleMenuPress(item)}
+              activeOpacity={0.7}
             >
               <View style={styles.menuLeft}>
                 <View style={[styles.menuIconWrapper, { backgroundColor: item.color + '15' }]}>
@@ -138,9 +385,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  nameWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nameWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   userName: {
     fontSize: 22,
     fontWeight: 'bold',
+  },
+  editNameButton: {
+    padding: 4,
+  },
+  nameEditContainer: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+  },
+  nameInput: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    minWidth: 200,
+  },
+  nameEditButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  nameEditButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   menuContainer: {
     gap: 10,

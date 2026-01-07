@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.imnottam.onboardinghome"
     },
     "web": {
       "output": "static",
@@ -45,7 +46,7 @@
       "reactCompiler": true
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"  
+      "policy": "sdkVersion"
     }
   }
 }
