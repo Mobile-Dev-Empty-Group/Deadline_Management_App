@@ -1,6 +1,6 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { getMe, updateProfile, uploadMedia, type User } from '@/services/api';
+import { getMe, updateProfile, uploadMedia, getMediaUrl, type User } from '@/services/api';
 import { clearAllUserData } from '@/utils/auth';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -33,6 +35,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -214,36 +217,18 @@ export default function ProfileScreen({ navigation }: any) {
           ) : (
             <>
               <View style={styles.avatarWrapper}>
-                <Image
-                  source={{
-                    uri: user?.avatar 
-                      ? (user.avatar.startsWith('http') 
-                          ? user.avatar 
-                          : user.avatar.startsWith('/')
-                            ? `https://backend-jqpw.onrender.com${user.avatar}`
-                            : user.avatar.startsWith('uploads/')
-                              ? `https://backend-jqpw.onrender.com/media/${user.avatar}`
-                              : `https://backend-jqpw.onrender.com/media/${user.avatar}`)
-                      : 'https://i.pravatar.cc/300'
-                  }}
-                  style={styles.avatar}
-                  resizeMode="cover"
-                  onError={(error: any) => {
-                    const errorMsg = error?.nativeEvent?.error || error?.message || 'Unknown error';
-                    console.log('Image load error:', errorMsg);
-                    console.log('Avatar URL from user:', user?.avatar);
-                    console.log('Full URL attempted:', user?.avatar 
-                      ? (user.avatar.startsWith('http') 
-                          ? user.avatar 
-                          : user.avatar.startsWith('/')
-                            ? `https://backend-jqpw.onrender.com${user.avatar}`
-                            : `https://backend-jqpw.onrender.com/media/${user.avatar}`)
-                      : 'https://i.pravatar.cc/300');
-                  }}
-                  onLoad={() => {
-                    console.log('Image loaded successfully');
-                  }}
-                />
+                <TouchableOpacity 
+                  onPress={() => setShowImageModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{
+                      uri: getMediaUrl(user?.avatar)
+                    }}
+                    style={styles.avatar}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.editBadge, { backgroundColor: primaryColor }]}
                   onPress={handleUploadAvatar}
@@ -327,6 +312,36 @@ export default function ProfileScreen({ navigation }: any) {
           ))}
         </View>
       </ScrollView>
+
+      {/* Image View Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <Pressable
+          style={styles.imageModalOverlay}
+          onPress={() => setShowImageModal(false)}
+        >
+          <View style={styles.imageModalContent}>
+            <TouchableOpacity
+              style={styles.imageModalCloseButton}
+              onPress={() => setShowImageModal(false)}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="close" size={28} color="#FFF" />
+            </TouchableOpacity>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <Image
+                source={{ uri: getMediaUrl(user?.avatar) }}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+              />
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -453,5 +468,33 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  imageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
   },
 });

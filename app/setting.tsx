@@ -1,7 +1,8 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { getMe, updateSettings, type User } from '@/services/api';
+import { getMe, updateSettings, changePassword, getMediaUrl, type User } from '@/services/api';
 import { clearAllUserData } from '@/utils/auth';
+import { resetOnboarding } from '@/utils/onboarding';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -84,7 +85,7 @@ export default function SettingScreen({ navigation }: any) {
   };
 
   const handleSavePassword = async () => {
-    if (!newPassword.trim() || !confirmPassword.trim()) {
+    if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -99,12 +100,19 @@ export default function SettingScreen({ navigation }: any) {
       return;
     }
 
-    // TODO: Implement change password API call when backend is ready
-    Alert.alert('Info', 'Change password feature will be available soon');
-    setShowChangePassword(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      await changePassword({
+        oldPassword: currentPassword,
+        newPassword: newPassword,
+      });
+      Alert.alert('Success', 'Password changed successfully!');
+      setShowChangePassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to change password');
+    }
   };
 
   const handleCancelPassword = () => {
@@ -120,6 +128,31 @@ export default function SettingScreen({ navigation }: any) {
 
   const handleTermsAndConditions = () => {
     router.push('/terms');
+  };
+
+  const handleTestOnboarding = async () => {
+    Alert.alert(
+      'Test Onboarding',
+      'This will reset the onboarding status. You will see the onboarding screens again.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          onPress: async () => {
+            await resetOnboarding();
+            Alert.alert('Success', 'Onboarding has been reset. The app will restart.', [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/onboarding'),
+              },
+            ]);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -146,7 +179,7 @@ export default function SettingScreen({ navigation }: any) {
             <>
               <Image
                 source={{
-                  uri: user?.avatar || 'https://i.pravatar.cc/150?img=11'
+                  uri: getMediaUrl(user?.avatar)
                 }}
                 style={styles.avatar}
               />
@@ -250,6 +283,12 @@ export default function SettingScreen({ navigation }: any) {
             label="Terms and conditions"
             iconRight="chevron-right"
             onPress={handleTermsAndConditions}
+          />
+
+          <SettingRow
+            label="Test Onboarding"
+            iconRight="chevron-right"
+            onPress={handleTestOnboarding}
           />
         </View>
 

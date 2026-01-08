@@ -1,8 +1,10 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { resetPassword } from '@/services/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Alert } from 'react-native';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -17,10 +19,12 @@ import {
 
 export default function SetNewPasswordScreen() {
   const router = useRouter();
+  const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [errorMessage, setErrorMessage] = useState('');
   const [isInputError, setIsInputError] = useState(false);
@@ -33,7 +37,7 @@ export default function SetNewPasswordScreen() {
   const inputBg = useThemeColor({}, 'inputBackground');
   const primaryColor = useThemeColor({}, 'primary');
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     Keyboard.dismiss();
     
     // Kiểm tra độ dài
@@ -50,9 +54,29 @@ export default function SetNewPasswordScreen() {
       return;
     }
 
-    // Nếu mọi thứ ổn
-    console.log('Password updated successfully');
-    router.replace('/login'); 
+    if (!email || !code) {
+      Alert.alert('Error', 'Missing email or verification code');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await resetPassword({
+        email,
+        code,
+        newPassword: password,
+      });
+      Alert.alert('Success', 'Password has been reset successfully', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/login'),
+        },
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to reset password');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Hàm xóa trạng thái lỗi khi người dùng bắt đầu nhập lại
@@ -149,12 +173,16 @@ export default function SetNewPasswordScreen() {
               style={[
                 styles.primaryButton,
                 { backgroundColor: primaryColor },
-                (!password || !confirmPassword) && { opacity: 0.5 }
+                (!password || !confirmPassword || isLoading) && { opacity: 0.5 }
               ]}
               onPress={handleUpdatePassword}
-              disabled={!password || !confirmPassword}
+              disabled={!password || !confirmPassword || isLoading}
             >
-              <Text style={styles.primaryButtonText}>Update Password</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Update Password</Text>
+              )}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

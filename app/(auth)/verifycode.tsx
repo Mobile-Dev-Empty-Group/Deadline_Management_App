@@ -1,8 +1,10 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { forgotPassword } from '@/services/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Alert } from 'react-native';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -22,6 +24,7 @@ export default function VerifyOtpScreen() {
   
   // State cho 5 ô OTP
   const [otp, setOtp] = useState(['', '', '', '', '']);
+  const [isResending, setIsResending] = useState(false);
   const otpInputs = useRef<TextInput[]>([]);
 
   // Colors từ Theme
@@ -53,8 +56,23 @@ export default function VerifyOtpScreen() {
   const handleVerify = () => {
     const code = otp.join('');
     if (code.length < 5) return;
-    console.log('Verifying code:', code);
-    router.push('/passreset');
+    router.push({
+      pathname: '/newpass',
+      params: { email: email || '', code: code }
+    });
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    setIsResending(true);
+    try {
+      await forgotPassword({ email });
+      Alert.alert('Success', 'Reset code has been resent to your email');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to resend code');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -121,8 +139,12 @@ export default function VerifyOtpScreen() {
             {/* Resend link */}
             <View style={styles.footer}>
               <Text style={{ color: textSecondary }}>Haven't got the email yet? </Text>
-              <TouchableOpacity onPress={() => console.log('Resending...')}>
-                <Text style={[styles.linkText, { color: primaryColor }]}>Resend email</Text>
+              <TouchableOpacity onPress={handleResend} disabled={isResending}>
+                {isResending ? (
+                  <ActivityIndicator size="small" color={primaryColor} />
+                ) : (
+                  <Text style={[styles.linkText, { color: primaryColor }]}>Resend email</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>

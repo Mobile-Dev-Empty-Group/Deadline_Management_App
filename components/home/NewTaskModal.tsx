@@ -106,7 +106,7 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
       console.log('Failed to load projects:', error);
     }
   };
-
+  
   // Lấy màu từ theme
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
@@ -251,7 +251,7 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
               // Combine availableCategories and customCategories, remove duplicates
               const allCategories = [...new Set([...availableCategories, ...customCategories])];
               return allCategories.map((cat, index) => (
-                <CategoryItem
+            <CategoryItem 
                   key={`category-${cat}-${index}`}
                   label={cat}
                   icon={cat === 'Personal' ? 'account' : cat === 'Homework' ? 'account-group' : 'briefcase'}
@@ -274,13 +274,13 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
           <Text style={[styles.label, { color: textColor }]}>Project</Text>
           <View style={styles.categoryRow}>
             {availableProjects.map((proj) => (
-              <CategoryItem
+            <CategoryItem 
                 key={`project-${proj.id}`}
                 label={proj.name}
                 icon="briefcase"
                 isActive={selectedProject?.id === proj.id}
                 onPress={() => setSelectedProject(proj)}
-              />
+            />
             ))}
             <TouchableOpacity
               style={[styles.addCategory, { backgroundColor: inputBg, borderWidth: 2, borderColor: borderColor }]}
@@ -309,7 +309,7 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
         <View style={styles.dateTimeRow}>
           <View style={[styles.section, { flex: 1, marginRight: 10 }]}>
             <Text style={[styles.label, { color: textColor }]}>Date</Text>
-            <TouchableOpacity
+            <TouchableOpacity 
               onPress={showDatePicker}
               style={[styles.inputRow, { backgroundColor: inputBg, borderWidth: 1, borderColor: borderColor }]}
             >
@@ -320,7 +320,7 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
 
           <View style={[styles.section, { flex: 1 }]}>
             <Text style={[styles.label, { color: textColor }]}>Time</Text>
-            <TouchableOpacity
+            <TouchableOpacity 
               onPress={showTimePicker}
               style={[styles.inputRow, { backgroundColor: inputBg, borderWidth: 1, borderColor: borderColor }]}
             >
@@ -470,8 +470,8 @@ export default function NewTaskModal({ onClose, onTaskCreated }: { onClose: () =
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fff" />
-                <Text style={[styles.btnText, { color: '#fff' }]}>Create</Text>
+            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fff" />
+            <Text style={[styles.btnText, { color: '#fff' }]}>Create</Text>
               </>
             )}
           </TouchableOpacity>
@@ -489,23 +489,23 @@ function CategoryItem({ label, icon, isActive, onPress }: any) {
   const borderColor = useThemeColor({}, 'border');
 
   return (
-    <TouchableOpacity
+    <TouchableOpacity 
       onPress={onPress}
       style={[
-        styles.categoryItem,
-        {
+        styles.categoryItem, 
+        { 
           backgroundColor: isActive ? primaryColor : inputBg,
           borderWidth: 2,
           borderColor: isActive ? primaryColor : borderColor
         }
       ]}>
-      <MaterialCommunityIcons
-        name={icon}
-        size={18}
-        color={isActive ? '#fff' : textColor}
+      <MaterialCommunityIcons 
+        name={icon} 
+        size={18} 
+        color={isActive ? '#fff' : textColor} 
       />
       <Text style={[
-        styles.categoryText,
+        styles.categoryText, 
         { color: isActive ? '#fff' : textColor }
       ]}>
         {label}

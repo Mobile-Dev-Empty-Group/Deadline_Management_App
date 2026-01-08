@@ -47,26 +47,26 @@ export function TaskList({ title, tasks, onViewAll, onTaskPress, onStatusChange 
             >
               <TouchableOpacity
                 onPress={(e) => handleCheckboxPress(task, e)}
-                style={[
-                  styles.checkbox,
-                  task.completed ? styles.checkboxCompleted : styles.checkboxPending,
+              style={[
+                styles.checkbox,
+                task.completed ? styles.checkboxCompleted : styles.checkboxPending,
                 ]}
               >
-                {task.completed ? <Feather name="check" size={12} color="#fff" /> : null}
+              {task.completed ? <Feather name="check" size={12} color="#fff" /> : null}
               </TouchableOpacity>
-              <View style={styles.itemContent}>
-                <View style={styles.itemTitleRow}>
+            <View style={styles.itemContent}>
+              <View style={styles.itemTitleRow}>
                   <Text style={[styles.itemTitle, task.completed && styles.itemTitleCompleted]}>
                     {task.title}
                   </Text>
-                  {task.tag ? (
-                    <View style={[styles.tag, { backgroundColor: task.tagColor ?? '#EAEAEA' }]}>
-                      <Text style={styles.tagLabel}>{task.tag}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                {task.time && <Text style={styles.itemTime}>{task.time}</Text>}
+                {task.tag ? (
+                  <View style={[styles.tag, { backgroundColor: task.tagColor ?? '#EAEAEA' }]}>
+                    <Text style={styles.tagLabel}>{task.tag}</Text>
+                  </View>
+                ) : null}
               </View>
+                {task.time && <Text style={styles.itemTime}>{task.time}</Text>}
+            </View>
             </TouchableOpacity>
           ))
         ) : (

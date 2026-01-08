@@ -152,6 +152,95 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
 };
 
 /**
+ * Forgot password - Gửi code về email
+ */
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export const forgotPassword = async (data: ForgotPasswordRequest): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.status !== 201) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to send reset code: ${response.status}`);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error occurred');
+  }
+};
+
+/**
+ * Reset password - Đặt lại mật khẩu với code
+ */
+export interface ResetPasswordRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
+export const resetPassword = async (data: ResetPasswordRequest): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.status !== 201) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to reset password: ${response.status}`);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error occurred');
+  }
+};
+
+/**
+ * Change password - Đổi mật khẩu khi đã đăng nhập
+ */
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const changePassword = async (data: ChangePasswordRequest): Promise<void> => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to change password: ${response.status}`);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error occurred');
+  }
+};
+
+/**
  * Lấy thông tin user hiện tại
  */
 export const getMe = async (): Promise<User> => {
@@ -206,10 +295,10 @@ export const updateProfile = async (data: UpdateProfileRequest): Promise<User> =
 
 /**
  * Upload media (avatar) với multipart/form-data
+ * Response là URL string hoặc object có field url
  */
 export interface UploadMediaResponse {
   url: string;
-  // Có thể có thêm các field khác tùy backend
 }
 
 export const uploadMedia = async (fileUri: string, fileName?: string): Promise<UploadMediaResponse> => {
@@ -248,62 +337,15 @@ export const uploadMedia = async (fileUri: string, fileName?: string): Promise<U
     }
 
     const result = await response.json();
-    console.log('Upload media response (raw):', JSON.stringify(result, null, 2));
     
-    // Hỗ trợ nhiều format response khác nhau
-    let avatarUrl: string | undefined;
-    
-    // Kiểm tra tất cả các khả năng
+    // Response có thể là string URL hoặc object có field url
+    let avatarUrl: string;
     if (typeof result === 'string') {
       avatarUrl = result;
     } else if (result.url) {
       avatarUrl = result.url;
-    } else if (result.data?.url) {
-      avatarUrl = result.data.url;
-    } else if (result.path) {
-      avatarUrl = result.path;
-    } else if (result.data?.path) {
-      avatarUrl = result.data.path;
-    } else if (result.file?.url) {
-      avatarUrl = result.file.url;
-    } else if (result.file?.path) {
-      avatarUrl = result.file.path;
-    } else if (result.location) {
-      avatarUrl = result.location;
-    } else if (result.link) {
-      avatarUrl = result.link;
-    } else if (result.filename) {
-      avatarUrl = result.filename;
-    }
-    
-    console.log('Extracted avatar URL:', avatarUrl);
-    
-    // Nếu URL là relative, thử nhiều cách để build full URL
-    if (avatarUrl && !avatarUrl.startsWith('http')) {
-      // Nếu URL bắt đầu với /, thêm base URL
-      if (avatarUrl.startsWith('/')) {
-        avatarUrl = `${API_BASE_URL}${avatarUrl}`;
-      } else {
-        // Thử các endpoint khác nhau
-        // 1. Thử /media/uploads/ trước
-        if (avatarUrl.startsWith('uploads/')) {
-          avatarUrl = `${API_BASE_URL}/media/${avatarUrl}`;
-        } 
-        // 2. Thử /public/uploads/
-        else if (avatarUrl.includes('uploads')) {
-          avatarUrl = `${API_BASE_URL}/public/${avatarUrl}`;
-        }
-        // 3. Thử /media/ cho các path khác
-        else {
-          avatarUrl = `${API_BASE_URL}/media/${avatarUrl}`;
-        }
-      }
-    }
-    
-    console.log('Final processed avatar URL:', avatarUrl);
-    
-    if (!avatarUrl) {
-      throw new Error('Invalid response format from upload API. Response: ' + JSON.stringify(result));
+    } else {
+      throw new Error('Invalid response format from upload API. Expected URL string or object with url field.');
     }
     
     return { url: avatarUrl };
@@ -313,6 +355,26 @@ export const uploadMedia = async (fileUri: string, fileName?: string): Promise<U
     }
     throw new Error('Network error occurred');
   }
+};
+
+/**
+ * Lấy URL để hiển thị ảnh từ /media endpoint
+ * @param url URL từ response của uploadMedia hoặc từ user.avatar
+ * @returns Full URL để sử dụng với Image component
+ */
+export const getMediaUrl = (url: string | null | undefined): string => {
+  if (!url) {
+    return 'https://i.pravatar.cc/300'; // Default avatar
+  }
+  
+  // Nếu đã là full URL (http/https), trả về trực tiếp
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Nếu là relative URL, sử dụng /media?url=...
+  const encodedUrl = encodeURIComponent(url);
+  return `${API_BASE_URL}/media?url=${encodedUrl}`;
 };
 
 /**
@@ -871,6 +933,44 @@ export const getAnalytics = async (data: GetAnalyticsRequest): Promise<Analytics
     }
 
     const result: AnalyticsResponse = await response.json();
+    return result;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error occurred');
+  }
+};
+
+// ========== NOTIFICATIONS APIs ==========
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  isRead: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Lấy danh sách notifications
+ */
+export const getNotifications = async (): Promise<Notification[]> => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/notifications`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to get notifications: ${response.status}`);
+    }
+
+    const result: Notification[] = await response.json();
     return result;
   } catch (error) {
     if (error instanceof Error) {

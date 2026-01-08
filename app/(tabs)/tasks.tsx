@@ -250,7 +250,7 @@ export default function MyTaskScreen() {
     if (taskId) {
       router.push({ pathname: '/edittask', params: { taskId } });
     } else {
-      router.push('/edittask');
+    router.push('/edittask');
     }
   };
 
@@ -560,7 +560,7 @@ function TaskCard({ task, projectName, onPress, showDate = false, onStatusChange
         <Text style={[styles.projectTitle, { color: secTextColor }]}>{projectName}</Text>
         <Text style={[styles.taskTitle, { color: textColor }]}>{task.title}</Text>
         {(taskTime || taskDate) && (
-          <View style={styles.taskFooter}>
+        <View style={styles.taskFooter}>
             {taskDate && (
               <>
                 <MaterialCommunityIcons name="calendar-outline" size={14} color="#6188D9" />
@@ -570,11 +570,11 @@ function TaskCard({ task, projectName, onPress, showDate = false, onStatusChange
             )}
             {taskTime && (
               <>
-                <MaterialCommunityIcons name="clock-outline" size={14} color="#6188D9" />
+          <MaterialCommunityIcons name="clock-outline" size={14} color="#6188D9" />
                 <Text style={[styles.timeText, { color: '#6188D9' }]}>{taskTime}</Text>
               </>
             )}
-          </View>
+        </View>
         )}
       </View>
 

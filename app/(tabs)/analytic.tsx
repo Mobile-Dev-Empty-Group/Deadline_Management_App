@@ -205,13 +205,13 @@ export default function AnalyticScreen({ navigation }: any) {
             ) : (
               // Fallback to mock data
               <>
-                <BarColumn day="Su" planned={60} completed={40} />
-                <BarColumn day="Mo" planned={80} completed={70} />
-                <BarColumn day="Tu" planned={70} completed={50} />
-                <BarColumn day="We" planned={100} completed={95} isPeak />
-                <BarColumn day="Th" planned={65} completed={55} />
-                <BarColumn day="Fr" planned={75} completed={60} />
-                <BarColumn day="Sa" planned={85} completed={75} />
+            <BarColumn day="Su" planned={60} completed={40} />
+            <BarColumn day="Mo" planned={80} completed={70} />
+            <BarColumn day="Tu" planned={70} completed={50} />
+            <BarColumn day="We" planned={100} completed={95} isPeak />
+            <BarColumn day="Th" planned={65} completed={55} />
+            <BarColumn day="Fr" planned={75} completed={60} />
+            <BarColumn day="Sa" planned={85} completed={75} />
               </>
             )}
           </View>

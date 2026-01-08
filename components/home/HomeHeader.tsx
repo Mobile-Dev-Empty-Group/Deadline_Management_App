@@ -1,19 +1,31 @@
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
+import { getMediaUrl } from '@/services/api';
 
 type Props = {
   userName: string;
+  avatarUrl?: string | null;
+  onBellPress?: () => void;
 };
 
-export function HomeHeader({ userName }: Props) {
+export function HomeHeader({ userName, avatarUrl, onBellPress }: Props) {
   const handleSearch = () => Alert.alert('Search', 'Opening search…');
-  const handleBell = () => Alert.alert('Reminders', 'All caught up for now!');
+  const handleBell = () => {
+    if (onBellPress) {
+      onBellPress();
+    } else {
+      Alert.alert('Reminders', 'All caught up for now!');
+    }
+  };
 
   return (
     <View style={styles.header}>
       <View style={styles.profile}>
-        <Image source={require('@/assets/images/onboarding1.png')} style={styles.avatar} />
+        <Image 
+          source={{ uri: getMediaUrl(avatarUrl) }} 
+          style={styles.avatar}
+        />
         <View>
           <Text style={styles.subtitle}>Welcome</Text>
           <Text style={styles.title}>{userName}</Text>
@@ -55,7 +67,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: 24, // Bo tròn hoàn toàn
   },
   subtitle: {
     fontSize: 14,

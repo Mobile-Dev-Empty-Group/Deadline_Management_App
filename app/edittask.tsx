@@ -23,7 +23,7 @@ export default function EditTaskScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const params = useLocalSearchParams<{ taskId?: string }>();
-
+  
   // Theme colors
   const textColor = useThemeColor({}, 'text');
   const secTextColor = useThemeColor({}, 'textSecondary');
@@ -272,8 +272,8 @@ export default function EditTaskScreen() {
     <ThemedView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.iconButton, { borderColor }]}
+        <TouchableOpacity 
+          style={[styles.iconButton, { borderColor }]} 
           onPress={handleBackPress}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={textColor} />
@@ -294,7 +294,7 @@ export default function EditTaskScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-
+        
           {/* Title Input */}
           <View style={[styles.inputGroup, { backgroundColor: inputBg, flexDirection: 'column', alignItems: 'flex-start' }]}>
             <Text style={[styles.labelSmall, { color: secTextColor }]}>Task Title</Text>
@@ -312,19 +312,19 @@ export default function EditTaskScreen() {
             style={[styles.inputGroup, { backgroundColor: inputBg }]}
             onPress={() => setShowProjectModal(true)}
           >
-            <View style={styles.rowCenter}>
-              <View style={[styles.iconSquare, { backgroundColor: '#FCE7F3' }]}>
-                <MaterialCommunityIcons name="briefcase" size={20} color="#DB2777" />
-              </View>
-              <View style={styles.ml12}>
+          <View style={styles.rowCenter}>
+            <View style={[styles.iconSquare, { backgroundColor: '#FCE7F3' }]}>
+              <MaterialCommunityIcons name="briefcase" size={20} color="#DB2777" />
+            </View>
+            <View style={styles.ml12}>
                 <Text style={[styles.labelSmall, { color: secTextColor }]}>Project</Text>
                 <Text style={[styles.valueText, { color: textColor }]}>
                   {selectedProject?.name || 'No Project'}
                 </Text>
-              </View>
             </View>
-            <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
-          </TouchableOpacity>
+          </View>
+          <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
+        </TouchableOpacity>
 
           {/* Project Picker Modal */}
           {showProjectModal && (
@@ -342,7 +342,7 @@ export default function EditTaskScreen() {
                     }}>
                       <MaterialCommunityIcons name="close" size={24} color={textColor} />
                     </TouchableOpacity>
-                  </View>
+        </View>
 
                   {/* Project List */}
                   <ScrollView style={styles.projectList} showsVerticalScrollIndicator={false}>
@@ -431,36 +431,36 @@ export default function EditTaskScreen() {
                       disabled={!newProjectName.trim()}
                     >
                       <Text style={styles.createCategoryBtnText}>Add Project</Text>
-                    </TouchableOpacity>
-                  </View>
+          </TouchableOpacity>
+        </View>
                 </View>
               </KeyboardAvoidingView>
             </View>
           )}
 
-          {/* Description */}
-          <View style={[styles.inputGroup, { backgroundColor: inputBg, flexDirection: 'column', alignItems: 'flex-start', height: 'auto', minHeight: 120 }]}>
-            <Text style={[styles.labelSmall, { color: secTextColor }]}>Description</Text>
-            <TextInput
-              multiline
-              style={[styles.descriptionInput, { color: textColor }]}
+        {/* Description */}
+        <View style={[styles.inputGroup, { backgroundColor: inputBg, flexDirection: 'column', alignItems: 'flex-start', height: 'auto', minHeight: 120 }]}>
+          <Text style={[styles.labelSmall, { color: secTextColor }]}>Description</Text>
+          <TextInput 
+            multiline
+            style={[styles.descriptionInput, { color: textColor }]}
               value={description}
               onChangeText={setDescription}
               placeholder="Enter description"
               placeholderTextColor={secTextColor}
-            />
-          </View>
+          />
+        </View>
 
-          {/* Start Date */}
+        {/* Start Date */}
           <TouchableOpacity
             style={[styles.inputGroup, { backgroundColor: inputBg }]}
             onPress={() => setDatePickerVisibility(true)}
           >
-            <View style={styles.rowCenter}>
-              <View style={[styles.iconSquare, { backgroundColor: '#E0E7FF' }]}>
-                <MaterialCommunityIcons name="calendar-range" size={20} color="#4F46E5" />
-              </View>
-              <View style={styles.ml12}>
+          <View style={styles.rowCenter}>
+            <View style={[styles.iconSquare, { backgroundColor: '#E0E7FF' }]}>
+              <MaterialCommunityIcons name="calendar-range" size={20} color="#4F46E5" />
+            </View>
+            <View style={styles.ml12}>
                 <Text style={[styles.labelSmall, { color: secTextColor }]}>Date</Text>
                 <Text style={[styles.valueText, { color: textColor }]}>{formatDate(date)}</Text>
               </View>
@@ -497,10 +497,10 @@ export default function EditTaskScreen() {
               <View style={styles.ml12}>
                 <Text style={[styles.labelSmall, { color: secTextColor }]}>End Time</Text>
                 <Text style={[styles.valueText, { color: textColor }]}>{formatTime(endTime)}</Text>
-              </View>
             </View>
-            <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
-          </TouchableOpacity>
+          </View>
+          <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
+        </TouchableOpacity>
 
           {/* Progress */}
           <View style={[styles.inputGroup, { backgroundColor: inputBg, flexDirection: 'column', alignItems: 'flex-start', height: 'auto', paddingVertical: 16 }]}>
@@ -577,19 +577,19 @@ export default function EditTaskScreen() {
             style={[styles.inputGroup, { backgroundColor: inputBg }]}
             onPress={() => setShowRepeatDayPicker(true)}
           >
-            <View style={styles.rowCenter}>
-              <View style={[styles.iconSquare, { backgroundColor: '#E0E7FF' }]}>
+          <View style={styles.rowCenter}>
+            <View style={[styles.iconSquare, { backgroundColor: '#E0E7FF' }]}>
                 <MaterialCommunityIcons name="repeat" size={20} color="#4F46E5" />
-              </View>
-              <View style={styles.ml12}>
+            </View>
+            <View style={styles.ml12}>
                 <Text style={[styles.labelSmall, { color: secTextColor }]}>Repeat Day</Text>
                 <Text style={[styles.valueText, { color: textColor }]}>
                   {repeatDay.length > 0 ? repeatDay.join(', ') : 'None'}
                 </Text>
-              </View>
             </View>
-            <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
-          </TouchableOpacity>
+          </View>
+          <MaterialCommunityIcons name="chevron-down" size={24} color={textColor} />
+        </TouchableOpacity>
 
           {/* Repeat Day Picker Modal */}
           {showRepeatDayPicker && (
@@ -679,16 +679,16 @@ export default function EditTaskScreen() {
             onCancel={() => setEndTimePickerVisibility(false)}
           />
 
-          {/* Bottom Buttons */}
-          <View style={styles.buttonRow}>
+        {/* Bottom Buttons */}
+        <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.btnAction, { backgroundColor: '#F1F5F9' }]}
               onPress={handleBackPress}
               disabled={isSaving}
             >
-              <MaterialCommunityIcons name="close-circle-outline" size={20} color="#1E293B" />
-              <Text style={[styles.btnText, { color: '#1E293B' }]}>Cancel</Text>
-            </TouchableOpacity>
+            <MaterialCommunityIcons name="close-circle-outline" size={20} color="#1E293B" />
+            <Text style={[styles.btnText, { color: '#1E293B' }]}>Cancel</Text>
+          </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btnAction, { backgroundColor: '#1E293B', opacity: isSaving ? 0.6 : 1 }]}
               onPress={handleSave}
@@ -698,14 +698,14 @@ export default function EditTaskScreen() {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <MaterialCommunityIcons name="check-circle-outline" size={20} color="#FFF" />
-                  <Text style={[styles.btnText, { color: '#FFF' }]}>Done</Text>
+            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#FFF" />
+            <Text style={[styles.btnText, { color: '#FFF' }]}>Done</Text>
                 </>
               )}
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+        </View>
 
-        </ScrollView>
+      </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
   );

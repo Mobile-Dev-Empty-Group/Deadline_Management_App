@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DailyChallengeCard } from '@/components/home/DailyChallengeCard';
@@ -14,8 +14,7 @@ import { TabSelector } from '@/components/home/TabSelector';
 import { TaskList } from '@/components/home/TaskList';
 import { challenge, homeTabs, quickActions } from '@/components/home/data';
 import type { FeaturedTask, HomeTabId, Task as HomeTask } from '@/components/home/types';
-import { getMe, getProjects, getTasks, updateTask, type Task as ApiTask } from '@/services/api';
-import { resetOnboarding } from '@/utils/onboarding';
+import { getMe, getNotifications, getProjects, getTasks, updateTask, type Task as ApiTask, type Notification, type User } from '@/services/api';
 
 // Helper để format date
 const formatTaskDate = (date: any): string => {
@@ -54,10 +53,14 @@ export default function HomeTab() {
   const [tasks, setTasks] = useState<HomeTask[]>([]);
   const [apiTasks, setApiTasks] = useState<ApiTask[]>([]); // Lưu API tasks để có thể lấy taskId
   const [projects, setProjects] = useState<any[]>([]);
-  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [morningTask, setMorningTask] = useState<ApiTask | null>(null);
   const [newTaskModalVisible, setNewTaskModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -73,11 +76,14 @@ export default function HomeTab() {
   // Reload tasks khi màn hình được focus
   useFocusEffect(
     useCallback(() => {
-      if (user) {
+      // Chỉ reload khi user đã có, nhưng không đưa user vào dependency để tránh vòng lặp
+      const currentUser = user;
+      if (currentUser) {
         loadTasks();
         loadMorningTask();
       }
-    }, [user, activeTab])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]) // Loại bỏ user khỏi dependency để tránh vòng lặp
   );
 
   const loadData = async () => {
@@ -94,6 +100,7 @@ export default function HomeTab() {
       setIsLoading(false);
     }
   };
+
 
   const loadTasks = async () => {
     if (!user) return;
@@ -330,20 +337,161 @@ export default function HomeTab() {
     };
   };
 
-  const handleResetOnboarding = async () => {
-    await resetOnboarding();
-    Alert.alert('Reset thành công', 'Onboarding sẽ xuất hiện lại ngay.', [
-      {
-        text: 'OK',
-        onPress: () => router.replace('/onboarding'),
-      },
-    ]);
+  // Hàm xử lý pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (user) {
+        // Reload user data để cập nhật avatar
+        const userData = await getMe();
+        setUser(userData);
+
+        // Reload projects
+        const projectsData = await getProjects({ uid: userData.id });
+        setProjects(projectsData);
+
+        // Reload tasks và morning task (không set isLoading để tránh xung đột)
+        // Tạo các hàm reload riêng không set isLoading
+        const reloadTasks = async () => {
+          if (!userData) return;
+          let status: string | undefined;
+          switch (activeTab) {
+            case 'inProgress':
+              status = 'IN_PROGRESS';
+              break;
+            case 'daily':
+            case 'weekly':
+            case 'team':
+              status = undefined;
+              break;
+          }
+          const tasksData = await getTasks({ uid: userData.id, status });
+          const mappedTasks = tasksData.map(task => {
+            const projectName = task.projectId
+              ? projectsData.find(p => p.id === task.projectId)?.name || 'No Project'
+              : 'No Project';
+            return mapApiTaskToHomeTask(task, projectName);
+          });
+          const sortedApiTasks = tasksData.sort((a, b) => {
+            const getSortTime = (task: ApiTask): number => {
+              if (task.startTime) {
+                try {
+                  const date = typeof task.startTime === 'string' ? new Date(task.startTime) : new Date(task.startTime);
+                  return isNaN(date.getTime()) ? 0 : date.getTime();
+                } catch {
+                  return 0;
+                }
+              }
+              if (task.date) {
+                try {
+                  const date = typeof task.date === 'string' ? new Date(task.date) : new Date(task.date);
+                  return isNaN(date.getTime()) ? 0 : date.getTime();
+                } catch {
+                  return 0;
+                }
+              }
+              return 0;
+            };
+            const timeA = getSortTime(a);
+            const timeB = getSortTime(b);
+            if (timeA === 0 && timeB === 0) return 0;
+            if (timeA === 0) return 1;
+            if (timeB === 0) return -1;
+            return timeA - timeB;
+          });
+          const sortedMappedTasks = sortedApiTasks.map(task => {
+            const projectName = task.projectId
+              ? projectsData.find(p => p.id === task.projectId)?.name || 'No Project'
+              : 'No Project';
+            return mapApiTaskToHomeTask(task, projectName);
+          });
+          setApiTasks(sortedApiTasks);
+          setTasks(sortedMappedTasks);
+        };
+
+        const reloadMorningTask = async () => {
+          if (!userData) return;
+          let tasksData = await getTasks({ uid: userData.id, status: 'IN_PROGRESS' });
+          if (tasksData.length === 0) {
+            tasksData = await getTasks({ uid: userData.id, status: 'TO_DO' });
+          }
+          if (tasksData.length === 0) {
+            setMorningTask(null);
+            return;
+          }
+          const getSortTime = (task: ApiTask): number => {
+            if (task.startTime) {
+              try {
+                const date = typeof task.startTime === 'string' ? new Date(task.startTime) : new Date(task.startTime);
+                return isNaN(date.getTime()) ? 0 : date.getTime();
+              } catch {
+                return 0;
+              }
+            }
+            if (task.date) {
+              try {
+                const date = typeof task.date === 'string' ? new Date(task.date) : new Date(task.date);
+                return isNaN(date.getTime()) ? 0 : date.getTime();
+              } catch {
+                return 0;
+              }
+            }
+            return 0;
+          };
+          const sortedTasks = tasksData.sort((a, b) => {
+            const timeA = getSortTime(a);
+            const timeB = getSortTime(b);
+            if (timeA === 0 && timeB === 0) return 0;
+            if (timeA === 0) return 1;
+            if (timeB === 0) return -1;
+            return timeA - timeB;
+          });
+          setMorningTask(sortedTasks[0]);
+        };
+
+        await Promise.all([reloadTasks(), reloadMorningTask()]);
+      }
+    } catch (error) {
+      // Xử lý lỗi nếu cần
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user, activeTab]);
+
+  // Hàm load notifications
+  const loadNotifications = async () => {
+    try {
+      setIsLoadingNotifications(true);
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to load notifications');
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  // Hàm xử lý khi click vào chuông
+  const handleBellPress = () => {
+    setNotificationsModalVisible(true);
+    loadNotifications();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <HomeHeader userName={user?.name || 'User'} />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#6C63FF"
+            colors={['#6C63FF']}
+          />
+        }
+      >
+        <HomeHeader userName={user?.name || 'User'} avatarUrl={user?.avatar} onBellPress={handleBellPress} />
         <TabSelector tabs={homeTabs} activeTab={activeTab} onChange={setActiveTab} />
         {morningTask ? (
           <FeaturedTaskCard task={mapApiTaskToFeaturedTask(morningTask)!} />
@@ -405,13 +553,6 @@ export default function HomeTab() {
             onStatusChange={handleStatusChange}
           />
         )}
-        <TouchableOpacity style={styles.testButton} onPress={handleResetOnboarding}>
-          <Text style={styles.testButtonText}>Test lại Onboarding</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.testButton} onPress={() => router.push('/(auth)/login')}>
-          <Text style={styles.testButtonText}>Trang Login</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* New Task Modal */}
@@ -438,6 +579,47 @@ export default function HomeTab() {
           />
         </View>
       </Modal>
+
+      {/* Notifications Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={notificationsModalVisible}
+        onRequestClose={() => setNotificationsModalVisible(false)}
+      >
+        <Pressable
+          style={StyleSheet.absoluteFillObject}
+          onPress={() => setNotificationsModalVisible(false)}
+        >
+          <View style={{ backgroundColor: 'rgba(0,0,0,0.4)', flex: 1 }} />
+        </Pressable>
+        <View style={styles.notificationsModalContent}>
+          <View style={styles.notificationsModalHeader}>
+            <Text style={styles.notificationsModalTitle}>Notifications</Text>
+            <Pressable onPress={() => setNotificationsModalVisible(false)}>
+              <Text style={styles.notificationsModalClose}>✕</Text>
+            </Pressable>
+          </View>
+          {isLoadingNotifications ? (
+            <View style={styles.notificationsLoadingContainer}>
+              <ActivityIndicator size="large" color="#6C63FF" />
+            </View>
+          ) : notifications.length === 0 ? (
+            <View style={styles.notificationsEmptyContainer}>
+              <Text style={styles.notificationsEmptyText}>No notifications</Text>
+            </View>
+          ) : (
+            <ScrollView style={styles.notificationsList} showsVerticalScrollIndicator={false}>
+              {notifications.map((notification) => (
+                <View key={notification.id} style={styles.notificationItem}>
+                  <Text style={styles.notificationTitle}>{notification.title}</Text>
+                  <Text style={styles.notificationMessage}>{notification.message}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -451,17 +633,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 110,
     gap: 18,
-  },
-  testButton: {
-    marginTop: 12,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#6C63FF',
-    alignItems: 'center',
-  },
-  testButtonText: {
-    color: '#fff',
-    fontWeight: '700',
   },
   emptyMorningTaskCard: {
     backgroundColor: '#fff',
@@ -550,5 +721,68 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+  notificationsModalContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: 100,
+    paddingTop: 20,
+  },
+  notificationsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECF5',
+  },
+  notificationsModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1B1B33',
+  },
+  notificationsModalClose: {
+    fontSize: 28,
+    color: '#8E8E93',
+    lineHeight: 28,
+  },
+  notificationsLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  notificationsEmptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  notificationsEmptyText: {
+    fontSize: 16,
+    color: '#8E8E93',
+  },
+  notificationsList: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  notificationItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1B1B33',
+    marginBottom: 6,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
   },
 });

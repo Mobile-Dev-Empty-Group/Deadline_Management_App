@@ -1,8 +1,10 @@
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { forgotPassword } from '@/services/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { ActivityIndicator, Alert } from 'react-native';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -18,6 +20,7 @@ import {
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // Lấy màu sắc từ hệ thống Theme của bạn
@@ -37,16 +40,26 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     Keyboard.dismiss();
     if (!email || emailError) {
       setEmailError(emailError || 'Please enter your email');
       return;
     }
-    router.push({
-      pathname: '/verifycode',
-      params: { email: email }
-    });
+
+    setIsLoading(true);
+    try {
+      await forgotPassword({ email });
+      Alert.alert('Success', 'Reset code has been sent to your email');
+      router.push({
+        pathname: '/verifycode',
+        params: { email: email }
+      });
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to send reset code');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -103,12 +116,16 @@ export default function ForgotPasswordScreen() {
               style={[
                 styles.primaryButton,
                 { backgroundColor: primaryColor },
-                (!email || !!emailError) && { opacity: 0.5 }
+                (!email || !!emailError || isLoading) && { opacity: 0.5 }
               ]}
               onPress={handleResetPassword}
-              disabled={!email || !!emailError}
+              disabled={!email || !!emailError || isLoading}
             >
-              <Text style={styles.primaryButtonText}>Reset Password</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Reset Password</Text>
+              )}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

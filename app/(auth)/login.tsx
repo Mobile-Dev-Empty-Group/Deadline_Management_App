@@ -29,13 +29,13 @@ export default function LoginScreen() {
 
   // Dùng ref để chuyển focus tự động
   const passwordRef = useRef<TextInput>(null);
-
+  
   // Hàm xử lý đóng bàn phím
   const dismissKeyboard = () => Keyboard.dismiss();
 
   const router = useRouter();
   const navigateToSignUp = () => {
-    router.replace('/signup');
+    router.replace('/signup'); 
   };
 
   // Lấy màu sắc từ Theme
@@ -101,8 +101,8 @@ export default function LoginScreen() {
       if (lowerMessage.includes('email') || lowerMessage.includes('not found') || lowerMessage.includes('user')) {
         setEmailError(errorMessage);
       } else if (lowerMessage.includes('password') || lowerMessage.includes('wrong') || lowerMessage.includes('incorrect') || lowerMessage.includes('credentials')) {
-        setPassError(true);
-      } else {
+      setPassError(true);
+    } else {
         Alert.alert('Login Failed', errorMessage);
       }
     } finally {
@@ -113,7 +113,7 @@ export default function LoginScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
       <ThemedView safe style={styles.container}>
-        <KeyboardAvoidingView
+        <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
@@ -122,7 +122,7 @@ export default function LoginScreen() {
             <View style={[styles.tab, { borderBottomColor: primaryColor }]}>
               <Text style={[styles.tabText, { color: primaryColor }]}>Log in</Text>
             </View>
-
+           
             <TouchableOpacity style={[styles.tab, { borderBottomColor: tabInactiveColor }]} onPress={navigateToSignUp}>
               <Text style={[styles.tabText, { color: tabInactiveColor }]}>Sign up</Text>
             </TouchableOpacity>
@@ -130,66 +130,66 @@ export default function LoginScreen() {
 
           <View style={styles.content}>
             {/* Email Field */}
-            <Text style={[styles.label, { color: textColor }]}>Your Email</Text>
-            <View style={[
-              styles.inputWrapper,
-              { borderColor: borderColor, backgroundColor: inputBg },
-              !!emailError && styles.inputError
-            ]}>
-              <TextInput
-                style={[styles.input, { color: textColor }]}
-                value={email}
-                onChangeText={handleEmailChange}
-                placeholder="Enter your email"
-                placeholderTextColor="#A0A0A0"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()} // Nhấn Next nhảy sang Pass
-              />
-            </View>
-            <View style={styles.errorSpace}>
-              {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
-            </View>
+              <Text style={[styles.label, { color: textColor }]}>Your Email</Text>
+              <View style={[
+                styles.inputWrapper, 
+                { borderColor: borderColor, backgroundColor: inputBg },
+                !!emailError && styles.inputError
+              ]}>
+                <TextInput 
+                  style={[styles.input, { color: textColor }]}
+                  value={email} 
+                  onChangeText={handleEmailChange}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#A0A0A0" 
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()} // Nhấn Next nhảy sang Pass
+                />
+              </View>
+              <View style={styles.errorSpace}>
+                {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
+              </View>
 
             {/* Password Field */}
-            <Text style={[styles.label, { color: textColor, marginTop: 10 }]}>Password</Text>
-            <View style={[
-              styles.inputWrapper,
-              { borderColor: borderColor, backgroundColor: inputBg },
-              passError && styles.inputError
-            ]}>
-              <TextInput
-                ref={passwordRef}
-                style={[styles.input, { color: textColor }]}
-                secureTextEntry={secureText}
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  setPassError(false);
-                }}
-                placeholder="Enter your password"
-                placeholderTextColor="#A0A0A0"
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
-              <TouchableOpacity onPress={() => setSecureText(!secureText)}>
-                <MaterialCommunityIcons name={secureText ? "eye-off-outline" : "eye-outline"} size={22} color={textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Helper Row (Wrong Password & Forgot Password) */}
-            <View style={styles.helperRow}>
-              <View style={{ flex: 1 }}>
-                {passError && <Text style={styles.errorText}>Wrong password</Text>}
+              <Text style={[styles.label, { color: textColor, marginTop: 10 }]}>Password</Text>
+              <View style={[
+                styles.inputWrapper, 
+                { borderColor: borderColor, backgroundColor: inputBg },
+                passError && styles.inputError
+              ]}>
+                <TextInput
+                  ref={passwordRef}
+                  style={[styles.input, { color: textColor }]} 
+                  secureTextEntry={secureText} 
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setPassError(false);
+                  }}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#A0A0A0"
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                />
+                <TouchableOpacity onPress={() => setSecureText(!secureText)}>
+                  <MaterialCommunityIcons name={secureText ? "eye-off-outline" : "eye-outline"} size={22} color={textSecondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity>
-                <Link href="/forgotpass" style={[styles.linkText, { color: primaryColor }]}>Forgot password?</Link>
-              </TouchableOpacity>
-            </View>
+
+              {/* Helper Row (Wrong Password & Forgot Password) */}
+              <View style={styles.helperRow}>
+                <View style={{ flex: 1 }}>
+                  {passError && <Text style={styles.errorText}>Wrong password</Text>}
+                </View>
+                <TouchableOpacity>
+                  <Link href="/forgotpass" style={[styles.linkText, { color: primaryColor }]}>Forgot password?</Link>
+                </TouchableOpacity>
+              </View>
 
             {/* Nút Login chính */}
-            <TouchableOpacity
+            <TouchableOpacity 
               style={[styles.primaryButton, { backgroundColor: primaryColor }, (!email || !password || isLoading) && { opacity: 0.6 }]}
               onPress={handleLogin}
               disabled={!email || !password || isLoading} // Disable khi chưa nhập đủ hoặc đang loading
@@ -197,7 +197,7 @@ export default function LoginScreen() {
               {isLoading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>Login</Text>
+              <Text style={styles.primaryButtonText}>Login</Text>
               )}
             </TouchableOpacity>
 
